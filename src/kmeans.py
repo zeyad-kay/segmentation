@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 
 # TODO:
@@ -68,7 +67,8 @@ class KMeans():
 
 if __name__ == "__main__":
     import cv2
-    
+    import sys
+
     if len(sys.argv) != 2:
         print("Must supply path to image file")
 
