@@ -56,11 +56,16 @@ class KMeans():
         return np.linalg.norm(x1 - x2, ord=2, axis=1)
 
     def __init_centroids(self, X):
-        # pick random centroids from the data
-        if self.initial_centroids is None:
-            self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        # check if user supplied initial centroid else
+        # initialize random centroids from the observations
+        if type(self.initial_centroids) == np.ndarray:
+            if self.initial_centroids.shape == (self.K, X.shape[1]):
+                self.centroids = self.initial_centroids
+            else:
+                raise ValueError(f"Expected shape({self.K}, {X.shape[1]}), found {self.initial_centroids.shape}") 
         else:
-            self.centroids = self.initial_centroids
+            self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        
 
         if self.verbose:
             [print(f"initial centroid {i+1}: {k}") for i,k in enumerate(self.centroids)]
