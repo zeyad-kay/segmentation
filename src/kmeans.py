@@ -1,11 +1,15 @@
 import sys
 import numpy as np
 
+# TODO:
+# Add loss function (intertia) and iterate for different seeds 
 class KMeans():
-    def __init__(self, K:int=2, max_iter:int =10, verbose:bool= False) -> None:
+    def __init__(self, K:int=2, initial_centroids:np.ndarray|None=None ,max_iter:int =100, tolerance:float=1e-4, verbose:bool= False) -> None:
         self.K = K
         self.max_iter = max_iter
         self.verbose = verbose
+        self.initial_centroids = initial_centroids
+        self.tolerance = tolerance
 
     def __check_params(self):
         if self.K < 2:
@@ -27,7 +31,7 @@ class KMeans():
             old_centroids = self.centroids.copy()
             self.__update_centroids(X,self.labels)
 
-            if np.array_equal(old_centroids,self.centroids):
+            if np.allclose(old_centroids,self.centroids,rtol=self.tolerance,atol=0):
                 if self.verbose:
                     print(f"converged at iteration #{i+1}")
                 return self
@@ -47,13 +51,18 @@ class KMeans():
         for i,c in enumerate(self.centroids):
             distances[i] = self.__euclidean_distance(X, c)
 
-        return np.argmin(distances,0)
+        return np.argmin(distances,axis=0)
 
     def __euclidean_distance(self, x1, x2):
         return np.linalg.norm(x1 - x2, ord=2, axis=1)
 
     def __init_centroids(self, X):
-        self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        # pick random centroids from the data
+        if self.initial_centroids is None:
+            self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        else:
+            self.centroids = self.initial_centroids
+
         if self.verbose:
             [print(f"initial centroid {i+1}: {k}") for i,k in enumerate(self.centroids)]
 
@@ -74,7 +83,7 @@ if __name__ == "__main__":
         # Convert to float type
         pixel_vals = np.float32(pixel_vals)
 
-        m = KMeans(K=3).fit(pixel_vals)
+        m = KMeans(K=3,max_iter=10).fit(pixel_vals)
 
         # convert data into 8-bit values
         centers = np.uint8(m.centroids)
