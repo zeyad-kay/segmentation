@@ -35,12 +35,27 @@ def optimal_threshold(img):
 def global_threshold(img,threshold_func):
     if len(img.shape)>2:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    threshold = threshold_func(img)
     new_img = np.zeros_like(img)
-    for row in range(img.shape[0]):
-        for col in range(img.shape[1]):
-            if img[row,col] > threshold:
-                new_img[row,col] = 255
+    if threshold_func == "spectral":
+
+        low_threshold ,high_threshold = spectral_threshold(img)
+        for row in range(img.shape[0]):
+            for col in range(img.shape[1]):
+                if img[row,col] < low_threshold:
+                    new_img[row,col] = 0
+                elif img[row,col] > high_threshold:
+                    new_img[row,col] = 255
+                else:
+                    new_img[row,col] = 128
+    else:
+        if threshold_func == "otsu":
+            threshold = otsu_threshold(img)
+        elif threshold_func == "optimal":
+            threshold = optimal_threshold(img)
+        for row in range(img.shape[0]):
+            for col in range(img.shape[1]):
+                if img[row,col] > threshold:
+                    new_img[row,col] = 255
     return new_img
 
 def local_threshold(img,kernal_size,threshold_func):
