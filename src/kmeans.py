@@ -1,4 +1,5 @@
 import numpy as np
+from utils import euclidean_distances
 
 # TODO:
 # Add loss function (intertia) and iterate for different seeds 
@@ -48,12 +49,9 @@ class KMeans():
     def __assign_labels(self, X: np.ndarray)-> np.ndarray:
         distances = np.ndarray((self.K,X.shape[0]))
         for i,c in enumerate(self.centroids):
-            distances[i] = self.__euclidean_distance(X, c)
+            distances[i] = euclidean_distances(X, c)
 
         return np.argmin(distances,axis=0)
-
-    def __euclidean_distance(self, x1, x2):
-        return np.linalg.norm(x1 - x2, ord=2, axis=1)
 
     def __init_centroids(self, X):
         # check if user supplied initial centroid else
