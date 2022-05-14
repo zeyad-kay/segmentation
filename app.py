@@ -78,7 +78,7 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
         elif self.comboBox_2.currentText() == "Mean-Shift":
             self.clustering_output = luv_rgb(meanshift(rgb_luv(self.clustering_img), int(self.bandwidth_input.text())))
         elif self.comboBox_2.currentText() == "Agglomerative":
-            op = cv2.cvtColor(self.clustering_img,cv2.COLOR_BGR2LUV)
+            op = cv2.cvtColor(self.clustering_img,cv2.COLOR_RGB2LUV)
             self.clustering_output = agglomerative(op, int(self.cluster_input.text()))
             RGB = False
         else:
