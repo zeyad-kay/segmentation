@@ -1,10 +1,11 @@
+import cv2
 import numpy as np
 import cv2 as cv
 import random
 import time
 
 class Agglomerative :
-    def __init__(self, number_of_clusters = 2) -> None:
+    def __init__(self,number_of_clusters = 2) -> None:
         self.number_of_clusters = number_of_clusters
 
     def calculate_initial_matrix(self) :
@@ -29,8 +30,9 @@ class Agglomerative :
                     minimum = [i,j]
         return minimum
 
-    def fit(self,image) :
-        self.image = image
+    def fit(self, image) :
+        self.original_image = image
+        self.image = np.array(image)
         self.points = self.image.reshape(self.image.shape[0] * self.image.shape[1] , 3)
         self.distance_matrix = [[-1]*len(self.points) for i in range(0,len(self.points))]
         self.dindogram = [[i] for i in range(len(self.points))]
@@ -90,19 +92,20 @@ class Agglomerative :
             for j in range(len(self.dindogram[i])) :
                 indx = self.dindogram[i][j]
                 self.points[indx] = colors[i]
-        return self.points.reshape(self.image.shape)
+        return self.points.reshape(self.original_image.shape)
 
-def agglomerative(image, number_of_clusters):
-    agg = Agglomerative(number_of_clusters)
+def agglomerative(image, clusters):
+    agg = Agglomerative(clusters)
     agg.fit(image)
     return agg.image_mask()
 
 
 if __name__ == "__main__":
+    im = cv.imread("./images/circles.jpeg")
     agg = Agglomerative(10)
     start_time = time.time()
-    agg.fit(cv.imread("./images/circles.jpeg"))
+    agg.fit(im)
     print("--- %s seconds ---" % (time.time() - start_time))
-    im=agg.image_mask()
-    cv.imshow("output",im)
+    output = agg.image_mask()
+    cv.imshow("out",output)
     cv.waitKey(0)
