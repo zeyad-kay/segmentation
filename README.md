@@ -72,3 +72,13 @@ threshold_func: You can select 3 types of thresholding "optimal", "otsu", or "sp
 
 ##### II. local thresholding
 ![img](results/local_spectral.png)
+
+## 1. Segmentation
+### 1. K-Means Segmentation
+![img](results/kmeans.png)
+### 2. Mean Shift Segmentation
+![img](results/meanshift.png)
+### 3. Agglomerative Segmentation
+![img](results/agg.png)
+### 4. Region Growing Segmentation
+![img](results/rg.png)

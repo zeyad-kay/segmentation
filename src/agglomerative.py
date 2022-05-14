@@ -1,17 +1,11 @@
-import cv2
 import numpy as np
 import cv2 as cv
 import random
 import time
 
 class Agglomerative :
-    def __init__(self,image_path) -> None:
-        self.original_image = cv.imread(image_path)
-        self.image = cv.cvtColor(self.original_image,cv2.COLOR_RGB2LUV)
-        self.image = np.array(self.original_image)
-        self.points = self.image.reshape(self.image.shape[0] * self.image.shape[1] , 3)
-        self.distance_matrix = [[-1]*len(self.points) for i in range(0,len(self.points))]
-        self.dindogram = [[i] for i in range(len(self.points))]
+    def __init__(self, number_of_clusters = 2) -> None:
+        self.number_of_clusters = number_of_clusters
 
     def calculate_initial_matrix(self) :
         for i in range(len(self.points)) :
@@ -35,10 +29,14 @@ class Agglomerative :
                     minimum = [i,j]
         return minimum
 
-    def fit(self,number_of_clusters = 2) :
-        if(number_of_clusters > len(self.points)) : raise Exception("You can not set the number of clusters to more than the number of points")
+    def fit(self,image) :
+        self.image = image
+        self.points = self.image.reshape(self.image.shape[0] * self.image.shape[1] , 3)
+        self.distance_matrix = [[-1]*len(self.points) for i in range(0,len(self.points))]
+        self.dindogram = [[i] for i in range(len(self.points))]
+        if(self.number_of_clusters > len(self.points)) : raise Exception("You can not set the number of clusters to more than the number of points")
         self.calculate_initial_matrix()
-        while len(self.dindogram) != number_of_clusters :
+        while len(self.dindogram) != self.number_of_clusters :
             minimum = self.get_minimum_distance(self.distance_matrix)
             new_cluster = [self.dindogram[minimum[0]],self.dindogram[minimum[1]]]
             flat_new_cluster = [item for sublist in new_cluster for item in sublist]
@@ -92,16 +90,19 @@ class Agglomerative :
             for j in range(len(self.dindogram[i])) :
                 indx = self.dindogram[i][j]
                 self.points[indx] = colors[i]
-        image = self.points.reshape(self.original_image.shape)
-        filename = "segmentedImage.png"
-        cv.imwrite(filename,image)
-        # cv.imshow("segmented image",image)
-        # cv.waitKey(0)
+        return self.points.reshape(self.image.shape)
 
-############################### usage ###############################
-agg = Agglomerative("../images/circls.jpeg")
-start_time = time.time()
-agg.fit(10)
-print("--- %s seconds ---" % (time.time() - start_time))
-agg.image_mask()
-#####################################################################
+def agglomerative(image, number_of_clusters):
+    agg = Agglomerative(number_of_clusters)
+    agg.fit(image)
+    return agg.image_mask()
+
+
+if __name__ == "__main__":
+    agg = Agglomerative(10)
+    start_time = time.time()
+    agg.fit(cv.imread("./images/circles.jpeg"))
+    print("--- %s seconds ---" % (time.time() - start_time))
+    im=agg.image_mask()
+    cv.imshow("output",im)
+    cv.waitKey(0)
