@@ -1,6 +1,6 @@
 import numpy as np
-from utils import euclidean_distances
-
+from .utils import euclidean_distances
+import cv2
 # TODO:
 # Add loss function (intertia) and iterate for different seeds 
 class KMeans():
@@ -44,7 +44,9 @@ class KMeans():
 
     def __update_centroids(self, X: np.ndarray, labels:np.ndarray):
         for k in range(self.K):
-            self.centroids[k] = X[np.where(labels==k)[0]].mean(axis=0)
+            x = X[np.where(labels==k)[0]]
+            if x.shape[0]:
+                self.centroids[k] = x.mean(axis=0)
 
     def __assign_labels(self, X: np.ndarray)-> np.ndarray:
         distances = np.ndarray((self.K,X.shape[0]))
@@ -68,6 +70,22 @@ class KMeans():
         if self.verbose:
             [print(f"initial centroid {i+1}: {k}") for i,k in enumerate(self.centroids)]
 
+def kmeans(image, K):
+
+    pixel_vals = image.reshape((-1,3))
+
+    # Convert to float type
+    pixel_vals = np.float32(pixel_vals)
+
+    m = KMeans(K=K,max_iter=10).fit(pixel_vals)
+
+    # convert data into 8-bit values
+    centers = np.uint8(m.centroids)
+    segmented_data = centers[m.labels.flatten()]
+    
+    # reshape data into the original image dimensions
+    return segmented_data.reshape((image.shape))
+    
 if __name__ == "__main__":
     import cv2
     import sys
@@ -87,7 +105,7 @@ if __name__ == "__main__":
         # Convert to float type
         pixel_vals = np.float32(pixel_vals)
 
-        m = KMeans(K=K,max_iter=10).fit(pixel_vals)
+        m = KMeans(K=K,max_iter=100).fit(pixel_vals)
 
         # convert data into 8-bit values
         centers = np.uint8(m.centroids)

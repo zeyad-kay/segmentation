@@ -1,10 +1,14 @@
 import gui
-from PyQt5 import QtWidgets , QtCore, QtGui
+from PyQt5 import QtWidgets
 import time
 import sys
 import cv2
 import matplotlib.pyplot as plt
 from src.threshold import global_threshold, local_threshold
+from src.agglomerative import agglomerative
+from src.kmeans import kmeans
+from src.meanshift import meanshift
+from src.regionGrowing import region_growing
 
 class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
     # resized = QtCore.pyqtSignal()
@@ -16,7 +20,9 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
         self.default_img()
         self.open_button.clicked.connect(self.open_image)
         self.open_button_2.clicked.connect(self.open_image)
+        self.comboBox_2.currentIndexChanged.connect(self.show_clustering_inputs, self.comboBox_2.currentIndex())
         self.apply_button.clicked.connect(self.apply_threshold)
+        self.apply_button_2.clicked.connect(self.apply_clustering)
     
 
     def open_image(self):
@@ -32,12 +38,11 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
             self.display(self.img_rgb,self.widgets[0])
             self.output_img.clear()
         else:
-            self.clustring_img = cv2.imread(self.file_path)
-            self.img_rgb = cv2.cvtColor(self.clustring_img, cv2.COLOR_BGR2RGB)
+            self.clustering_img = cv2.imread(self.file_path)
+            self.img_rgb = cv2.cvtColor(self.clustering_img, cv2.COLOR_BGR2RGB)
             self.apply_button_2.setEnabled(True)
             self.comboBox_2.setEnabled(True)
-            self.cluster_input.setEnabled(True)
-            self.threshold_input.setEnabled(True)
+            self.show_clustering_inputs(_)
             self.display(self.img_rgb,self.widgets[2])
             self.output_img.clear()
 
@@ -63,7 +68,38 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
         self.threshold_output = cv2.cvtColor(self.threshold_output, cv2.COLOR_BGR2RGB)
         self.display(self.threshold_output,self.widgets[1])
         self.time_label.setText(str("{:.3f}".format(end-start)) + " Seconds")
+
+    def apply_clustering(self):
+        start = time.time()
+        if self.comboBox_2.currentText() == "K-Means":
+            self.clustering_output = kmeans(self.clustering_img, int(self.cluster_input.text()))
+        elif self.comboBox_2.currentText() == "Mean-Shift":
+            self.clustering_output = meanshift(self.clustering_img, int(self.bandwidth_input.text()))
+        elif self.comboBox_2.currentText() == "Agglomerative":
+            self.clustering_output = agglomerative(self.clustering_img, int(self.cluster_input.text()))
+        else:
+            seeds = [[10, 10],[82, 150],[20, 300]]
+            self.clustering_output = region_growing(self.clustering_img, seeds, int(self.threshold_input.text()))
         
+        end = time.time()
+        self.clustering_output = cv2.cvtColor(self.clustering_output, cv2.COLOR_BGR2RGB)
+        self.display(self.clustering_output,self.widgets[3])
+        self.time_label.setText(str("{:.3f}".format(end-start)) + " Seconds")
+
+    def show_clustering_inputs(self, index):
+        if self.comboBox_2.currentText() == "K-Means" or self.comboBox.currentText() == "Agglomerative":
+            self.cluster_input.setEnabled(True)
+            self.bandwidth_input.setEnabled(False)
+            self.threshold_input.setEnabled(False)
+        elif self.comboBox_2.currentText() == "Mean-Shift":
+            self.threshold_input.setEnabled(False)
+            self.cluster_input.setEnabled(False)
+            self.bandwidth_input.setEnabled(True)
+        else:
+            self.cluster_input.setEnabled(False)
+            self.bandwidth_input.setEnabled(False)
+            self.threshold_input.setEnabled(True)
+
     def display(self , data , widget):
             data = cv2.transpose(data)
             widget.setImage(data)

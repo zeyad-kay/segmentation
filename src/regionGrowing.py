@@ -2,8 +2,7 @@ import numpy as np
 import cv2
 
 class RegionGrowing :
-    def __init__(self,image_path) -> None:
-        self.image = cv2.imread(image_path,0)
+    def __init__(self) -> None:
         self.finalImage = None
 
     def getGrayDiff(self,img, currentPoint, tmpPoint):
@@ -19,9 +18,9 @@ class RegionGrowing :
         return connects
 
 
-    def fit(self, seeds, thresh, p=1):
+    def fit(self, image, seeds, thresh, p=1):
         seeds = [Point(point[0],point[1]) for point in seeds]
-        img = self.image
+        img = image
         height, weight = img.shape
         seedMark = np.zeros(img.shape)
         seedList = []
@@ -58,9 +57,16 @@ class Point(object):
     def getY(self):
         return self.y
 
-############################################ USAGE #################################
-seeds = [[10, 10],[82, 150],[20, 300]]
-region = RegionGrowing("../images/Lenna_512.png")
-region.fit(seeds, 6)
-region.show_masked_image()
-############################################ USAGE #################################
+def region_growing(image, seeds, threshold):
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    region = RegionGrowing()
+    region.fit(img, seeds, threshold)
+    return region.finalImage
+
+if __name__ == "__main__":
+    seeds = [[10, 10],[82, 150],[20, 300]]
+    image = cv2.imread("./images/Lenna_512.png")
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    region = RegionGrowing()
+    region.fit(img, seeds, 6)
+    region.show_masked_image()

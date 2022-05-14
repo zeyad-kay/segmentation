@@ -8,7 +8,7 @@
 #   repeat until convergence
 
 import numpy as np
-from utils import euclidean_distances, kernel_density_estimation
+from .utils import euclidean_distances, kernel_density_estimation
 
 class MeanShift:
     def __init__(self, bandwidth: float, tolerance: float = 1e-2,verbose:bool = False) -> None:
@@ -85,7 +85,21 @@ def test_custom_data():
 
     plt.show()
 
-test_custom_data()
+def meanshift(image, bandwidth):
+
+    pixel_vals = image.reshape((-1,3))
+
+    # Convert to float type
+    pixel_vals = np.float32(pixel_vals)
+
+    m = MeanShift(bandwidth=bandwidth).fit(pixel_vals)
+
+    # convert data into 8-bit values
+    centers = np.uint8(m.centers)
+    segmented_data = centers[m.labels.astype(int)]
+    
+    # reshape data into the original image dimensions
+    return segmented_data.reshape((image.shape))
 
 if __name__ == "__main__":
     import cv2
@@ -99,28 +113,7 @@ if __name__ == "__main__":
         
         bandwidth = int(sys.argv[2])
         
-        image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        pixel_vals = image.reshape((-1,3))
-
-        # Convert to float type
-        pixel_vals = np.float32(pixel_vals)
-
-        OK = True
-        if pixel_vals.shape[0] > 100*100:
-            proceed = input("Images bigger than 100x100 may take longer than expected.\nProceed (yes or no): ")
-            OK = True if proceed == "yes" else False
-        
-        if not OK:
-            exit()
-        m = MeanShift(bandwidth=bandwidth).fit(pixel_vals)
-
-        # convert data into 8-bit values
-        centers = np.uint8(m.centers)
-        segmented_data = centers[m.labels.astype(int)]
-    
-        # reshape data into the original image dimensions
-        segmented_image = segmented_data.reshape((image.shape))
+        segmented_image = meanshift(MeanShift, img, bandwidth)
     
         cv2.imshow("original",img)
         cv2.imshow("segmented",segmented_image)
