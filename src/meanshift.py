@@ -9,19 +9,14 @@
 
 import numpy as np
 from utils import euclidean_distances, kernel_density_estimation
-from matplotlib import pyplot as plt
-
 
 class MeanShift:
-    def __init__(self, bandwidth: float, window_size:float = 1,tolerance: float = 1e-2,verbose:bool = False) -> None:
-        self.window_size = window_size
+    def __init__(self, bandwidth: float, tolerance: float = 1e-2,verbose:bool = False) -> None:
         self.bandwidth = bandwidth
         self.tolerance = tolerance
         self.verbose = verbose
 
     def __check_params(self):
-        if self.window_size < 0:
-            raise ValueError("window_size must be greater than 0")
         if self.tolerance < 0:
             raise ValueError("tolerance must be greater than 0")
         if self.bandwidth < 0:
@@ -29,52 +24,106 @@ class MeanShift:
 
     def fit(self, X: np.ndarray):
         self.__check_params()
+        self.labels = np.ndarray((X.shape[0],))
         self.centers = np.ndarray((0,X.shape[1]))
-        for x in X:
+        for i,x in enumerate(X):
             center = x.copy()
-            center = np.array([1,1])
             old_center = np.inf
             while not np.allclose(old_center,center,rtol=self.tolerance,atol=0):
                 old_center = center.copy()
                 neighbours = self.__get_neighbours(X, center)
                 kde = kernel_density_estimation(neighbours - center)
                 center = np.sum(kde * neighbours,axis=0)/np.sum(kde,axis=0)
-            # if np.abs()
-            self.centers = np.append(self.centers, [center],axis=0)
+            
+            existing = False
+            for j,c in enumerate(self.centers):
+                if np.allclose(c, center,rtol=0.1,atol=1):
+                    self.labels[i] = j
+                    existing = True
+            
+            if not existing:
+                self.centers = np.append(self.centers, [center],axis=0)
+                self.labels[i] = self.centers.shape[0] - 1
+
         return self
 
     def __get_neighbours(self, X: np.ndarray, center: np.ndarray) -> np.ndarray:
         distances = euclidean_distances(X, center)
-        return X[distances <= self.window_size]
+        return X[distances <= self.bandwidth]
 
 
 
-# from sklearn.cluster import MeanShift
-from sklearn.datasets._samples_generator import make_blobs
-# from mpl_toolkits.mplot3d import Axes3D
 
-# # We will be using the make_blobs method
-# # in order to generate our own data.
+def test_custom_data():
+    from matplotlib import pyplot as plt
+    from sklearn.datasets._samples_generator import make_blobs
+    from mpl_toolkits.mplot3d import Axes3D
 
-clusters = [[2, 2],[7,7],[5,5]]
+    # We will be using the make_blobs method
+    # in order to generate our own data.
+    clusters = [[2, 2,2],[8,14,1],[8,8,14],[12,12,12],[8,2,0]]
 
-X, _ = make_blobs(n_samples = 150, centers = clusters,
-								cluster_std = 0.60)
+    X, _ = make_blobs(n_samples = 5000, centers = clusters,
+    								cluster_std = 0.60)
 
-# # After training the model, We store the
-# # coordinates for the cluster centers
-ms = MeanShift(1)
-ms.fit(X)
-cluster_centers = ms.centers
+    # # After training the model, We store the
+    # # coordinates for the cluster centers
+    ms = MeanShift(bandwidth=2)
+    ms.fit(X)
+    cluster_centers = ms.centers
 
-# Finally We plot the data points
-# and centroids in a 3D graph.
-fig = plt.figure()
+    # Finally We plot the data points
+    # and centroids in a 3D graph.
 
-ax = fig.add_subplot(111)
+    fig = plt.figure()
 
-ax.scatter(X[:, 0], X[:, 1], marker ='o')
-ax.scatter(cluster_centers[:, 0], cluster_centers[:, 1], marker ='x', color ='red',
-		s = 300, linewidth = 5, zorder = 10)
+    ax = fig.add_subplot(111,projection="3d")
 
-plt.show()
+    ax.scatter(X[:, 0], X[:, 1], X[:,2],marker ='o',c=ms.labels)
+    ax.scatter(cluster_centers[:, 0], cluster_centers[:, 1], cluster_centers[:, 2], marker ='x', color ='red',
+    		s = 300, linewidth = 5, zorder = 1)
+
+    plt.show()
+
+test_custom_data()
+
+if __name__ == "__main__":
+    import cv2
+    import sys
+
+    if len(sys.argv) != 3:
+        print("Must supply path to image file and bandwidth.")
+
+    try:
+        img = cv2.imread(sys.argv[1])
+        
+        bandwidth = int(sys.argv[2])
+        
+        image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        pixel_vals = image.reshape((-1,3))
+
+        # Convert to float type
+        pixel_vals = np.float32(pixel_vals)
+
+        OK = True
+        if pixel_vals.shape[0] > 100*100:
+            proceed = input("Images bigger than 100x100 may take longer than expected.\nProceed (yes or no): ")
+            OK = True if proceed == "yes" else False
+        
+        if not OK:
+            exit()
+        m = MeanShift(bandwidth=bandwidth).fit(pixel_vals)
+
+        # convert data into 8-bit values
+        centers = np.uint8(m.centers)
+        segmented_data = centers[m.labels.astype(int)]
+    
+        # reshape data into the original image dimensions
+        segmented_image = segmented_data.reshape((image.shape))
+    
+        cv2.imshow("original",img)
+        cv2.imshow("segmented",segmented_image)
+        cv2.waitKey(0)
+    except cv2.error:
+        print("Must supply valid image path")

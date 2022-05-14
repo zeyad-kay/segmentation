@@ -72,11 +72,12 @@ if __name__ == "__main__":
     import cv2
     import sys
 
-    if len(sys.argv) != 2:
-        print("Must supply path to image file")
+    if len(sys.argv) != 3:
+        print("Must supply path to image file and number of clusters")
 
     try:
         img = cv2.imread(sys.argv[1])
+        K = int(sys.argv[2])
 
         image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         # Convert to float type
         pixel_vals = np.float32(pixel_vals)
 
-        m = KMeans(K=3,max_iter=10).fit(pixel_vals)
+        m = KMeans(K=K,max_iter=10).fit(pixel_vals)
 
         # convert data into 8-bit values
         centers = np.uint8(m.centroids)
