@@ -79,6 +79,6 @@ threshold_func: You can select 3 types of thresholding "optimal", "otsu", or "sp
 ### 2. Mean Shift Segmentation
 ![img](results/meanshift.png)
 ### 3. Agglomerative Segmentation
-![img](results/agg.png)
+![img](results/agglomerative.png)
 ### 4. Region Growing Segmentation
 ![img](results/rg.png)
