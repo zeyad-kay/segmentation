@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import cv2 as cv
 import random
@@ -13,9 +14,11 @@ class Agglomerative :
                 if(j == i) : 
                     self.distance_matrix[j][i] = -1
                     continue
-                self.distance_matrix[j][i] = self.calcualte_distance(self.points[i],self.points[j])
+                self.distance_matrix[j][i] = self.calcualte_distance(self.points[i],self.points[j],i,j)
 
-    def calcualte_distance(self,p1,p2) :
+    def calcualte_distance(self,p1,p2,i,j) :
+        p1 = np.append(p1,i)
+        p2 = np.append(p2,j)
         return np.sqrt(np.sum(np.square(np.subtract(p1,p2))))
 
     def get_minimum_distance(self,matrix) :
@@ -97,8 +100,8 @@ def agglomerative(image, number_of_clusters):
 
 
 if __name__ == "__main__":
-    agg = Agglomerative(60)
+    agg = Agglomerative(10)
     start_time = time.time()
-    agg.fit(cv.imread("./images/ss.png"))
+    agg.fit(cv.imread("./images/circles.png"))
     print("--- %s seconds ---" % (time.time() - start_time))
     agg.image_mask()
