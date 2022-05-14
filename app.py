@@ -89,7 +89,7 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
         end = time.time()
         self.clustering_output = cv2.cvtColor(self.clustering_output, cv2.COLOR_BGR2RGB) if RGB else self.clustering_output
         self.display(self.clustering_output,self.widgets[3])
-        self.time_label.setText(str("{:.3f}".format(end-start)) + " Seconds")
+        self.time_label_2.setText(str("{:.3f}".format(end-start)) + " Seconds")
 
     def show_clustering_inputs(self, index):
         if self.comboBox_2.currentText() == "K-Means" or self.comboBox_2.currentText() == "Agglomerative":
