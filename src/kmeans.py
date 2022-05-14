@@ -1,11 +1,15 @@
-import sys
 import numpy as np
+from utils import euclidean_distances
 
+# TODO:
+# Add loss function (intertia) and iterate for different seeds 
 class KMeans():
-    def __init__(self, K:int=2, max_iter:int =10, verbose:bool= False) -> None:
+    def __init__(self, K:int=2, initial_centroids:np.ndarray|None=None ,max_iter:int =100, tolerance:float=1e-4, verbose:bool= False) -> None:
         self.K = K
         self.max_iter = max_iter
         self.verbose = verbose
+        self.initial_centroids = initial_centroids
+        self.tolerance = tolerance
 
     def __check_params(self):
         if self.K < 2:
@@ -27,7 +31,7 @@ class KMeans():
             old_centroids = self.centroids.copy()
             self.__update_centroids(X,self.labels)
 
-            if np.array_equal(old_centroids,self.centroids):
+            if np.allclose(old_centroids,self.centroids,rtol=self.tolerance,atol=0):
                 if self.verbose:
                     print(f"converged at iteration #{i+1}")
                 return self
@@ -45,26 +49,35 @@ class KMeans():
     def __assign_labels(self, X: np.ndarray)-> np.ndarray:
         distances = np.ndarray((self.K,X.shape[0]))
         for i,c in enumerate(self.centroids):
-            distances[i] = self.__euclidean_distance(X, c)
+            distances[i] = euclidean_distances(X, c)
 
-        return np.argmin(distances,0)
-
-    def __euclidean_distance(self, x1, x2):
-        return np.linalg.norm(x1 - x2, ord=2, axis=1)
+        return np.argmin(distances,axis=0)
 
     def __init_centroids(self, X):
-        self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        # check if user supplied initial centroid else
+        # initialize random centroids from the observations
+        if type(self.initial_centroids) == np.ndarray:
+            if self.initial_centroids.shape == (self.K, X.shape[1]):
+                self.centroids = self.initial_centroids
+            else:
+                raise ValueError(f"Expected shape({self.K}, {X.shape[1]}), found {self.initial_centroids.shape}") 
+        else:
+            self.centroids = np.array([X[np.random.randint(0,X.shape[0])] for _ in range(self.K)])
+        
+
         if self.verbose:
             [print(f"initial centroid {i+1}: {k}") for i,k in enumerate(self.centroids)]
 
 if __name__ == "__main__":
     import cv2
-    
-    if len(sys.argv) != 2:
-        print("Must supply path to image file")
+    import sys
+
+    if len(sys.argv) != 3:
+        print("Must supply path to image file and number of clusters")
 
     try:
         img = cv2.imread(sys.argv[1])
+        K = int(sys.argv[2])
 
         image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -74,7 +87,7 @@ if __name__ == "__main__":
         # Convert to float type
         pixel_vals = np.float32(pixel_vals)
 
-        m = KMeans(K=3).fit(pixel_vals)
+        m = KMeans(K=K,max_iter=10).fit(pixel_vals)
 
         # convert data into 8-bit values
         centers = np.uint8(m.centroids)
