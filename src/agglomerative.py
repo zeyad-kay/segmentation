@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 import cv2 as cv
 import random
@@ -102,6 +101,8 @@ def agglomerative(image, number_of_clusters):
 if __name__ == "__main__":
     agg = Agglomerative(10)
     start_time = time.time()
-    agg.fit(cv.imread("./images/circles.png"))
+    agg.fit(cv.imread("./images/circles.jpeg"))
     print("--- %s seconds ---" % (time.time() - start_time))
-    agg.image_mask()
+    im=agg.image_mask()
+    cv.imshow("output",im)
+    cv.waitKey(0)

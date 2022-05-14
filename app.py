@@ -9,6 +9,7 @@ from src.agglomerative import agglomerative
 from src.kmeans import kmeans
 from src.meanshift import meanshift
 from src.regionGrowing import region_growing
+from src.luv import rgb_luv,luv_rgb
 
 class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
     # resized = QtCore.pyqtSignal()
@@ -70,24 +71,30 @@ class MainWindow(QtWidgets.QMainWindow , gui.Ui_MainWindow):
         self.time_label.setText(str("{:.3f}".format(end-start)) + " Seconds")
 
     def apply_clustering(self):
+        RGB = True
         start = time.time()
         if self.comboBox_2.currentText() == "K-Means":
-            self.clustering_output = kmeans(self.clustering_img, int(self.cluster_input.text()))
+            self.clustering_output = luv_rgb(kmeans(rgb_luv(self.clustering_img), int(self.cluster_input.text())))
         elif self.comboBox_2.currentText() == "Mean-Shift":
-            self.clustering_output = meanshift(self.clustering_img, int(self.bandwidth_input.text()))
+            self.clustering_output = luv_rgb(meanshift(rgb_luv(self.clustering_img), int(self.bandwidth_input.text())))
         elif self.comboBox_2.currentText() == "Agglomerative":
-            self.clustering_output = agglomerative(self.clustering_img, int(self.cluster_input.text()))
+            op = cv2.cvtColor(self.clustering_img,cv2.COLOR_RGB2LUV)
+            self.clustering_output = agglomerative(op, int(self.cluster_input.text()))
+            cv2.imshow("asd",self.clustering_output)
+            cv2.waitKey(0)
+            RGB = False
         else:
             seeds = [[10, 10],[82, 150],[20, 300]]
             self.clustering_output = region_growing(self.clustering_img, seeds, int(self.threshold_input.text()))
-        
+            RGB = False
+
         end = time.time()
-        self.clustering_output = cv2.cvtColor(self.clustering_output, cv2.COLOR_BGR2RGB)
+        self.clustering_output = cv2.cvtColor(self.clustering_output, cv2.COLOR_BGR2RGB) if RGB else self.clustering_output
         self.display(self.clustering_output,self.widgets[3])
         self.time_label.setText(str("{:.3f}".format(end-start)) + " Seconds")
 
     def show_clustering_inputs(self, index):
-        if self.comboBox_2.currentText() == "K-Means" or self.comboBox.currentText() == "Agglomerative":
+        if self.comboBox_2.currentText() == "K-Means" or self.comboBox_2.currentText() == "Agglomerative":
             self.cluster_input.setEnabled(True)
             self.bandwidth_input.setEnabled(False)
             self.threshold_input.setEnabled(False)

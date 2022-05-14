@@ -1,7 +1,5 @@
 import numpy as np
 
-from kmeans import KMeans
-
 def inverseGamma(t):
     if (t < 0.03928):
         return t/12.92
@@ -82,7 +80,7 @@ def rgb_luv(inputImage):
 
 
 def luv_rgb(LuvMatrix):
-    rows, cols, bands = inputImage.shape # bands == 3
+    rows, cols, bands = LuvMatrix.shape # bands == 3
     u_w = (4*0.95/(0.95+ 15 + 3*1.09))
     v_w = (9/(0.95+ 15 + 3*1.09))
     XYZ2LRGBMatrix = [[3.240479, -1.53715, -0.498535],
