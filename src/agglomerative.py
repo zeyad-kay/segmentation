@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import cv2 as cv
 import random
@@ -6,6 +7,7 @@ import time
 class Agglomerative :
     def __init__(self,image_path) -> None:
         self.original_image = cv.imread(image_path)
+        self.image = cv.cvtColor(self.original_image,cv2.COLOR_RGB2LUV)
         self.image = np.array(self.original_image)
         self.points = self.image.reshape(self.image.shape[0] * self.image.shape[1] , 3)
         self.distance_matrix = [[-1]*len(self.points) for i in range(0,len(self.points))]
@@ -17,9 +19,11 @@ class Agglomerative :
                 if(j == i) : 
                     self.distance_matrix[j][i] = -1
                     continue
-                self.distance_matrix[j][i] = self.calcualte_distance(self.points[i],self.points[j])
+                self.distance_matrix[j][i] = self.calcualte_distance(self.points[i],self.points[j],i,j)
 
-    def calcualte_distance(self,p1,p2) :
+    def calcualte_distance(self,p1,p2,i,j) :
+        p1 = np.append(p1,i)
+        p2 = np.append(p2,j)
         return np.sqrt(np.sum(np.square(np.subtract(p1,p2))))
 
     def get_minimum_distance(self,matrix) :
@@ -95,9 +99,9 @@ class Agglomerative :
         # cv.waitKey(0)
 
 ############################### usage ###############################
-agg = Agglomerative("../images/ss.png")
+agg = Agglomerative("../images/circls.jpeg")
 start_time = time.time()
-agg.fit(5)
+agg.fit(10)
 print("--- %s seconds ---" % (time.time() - start_time))
 agg.image_mask()
 #####################################################################
